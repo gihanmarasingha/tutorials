@@ -97,13 +97,16 @@ Now let's practice.
 -- 0023
 example (f g : ℝ → ℝ) : even_fun f → even_fun (g ∘ f) :=
 begin
-  sorry
+  intros hf x,
+  calc g (f (-x)) = g (f x) : by rw hf,
 end
 
 -- 0024
 example (f g : ℝ → ℝ) : odd_fun f → odd_fun g →  odd_fun (g ∘ f) :=
 begin
-  sorry
+  intros hf hg x,
+  calc g (f (-x)) = g (-(f x)) : by rw hf
+              ... = - g(f x) : by rw hg
 end
 
 /-
@@ -191,7 +194,10 @@ end
 -- 0025
 example (f g : ℝ → ℝ) (hf : non_decreasing f) (hg : non_increasing g) : non_increasing (g ∘ f) :=
 begin
-  sorry
+  intros x₁ x₂ h,
+  apply hg,
+  apply hf,
+  exact h,
 end
 
 /-
@@ -232,7 +238,19 @@ end
 -- 0026
 example (x y : ℝ) : x^2 = y^2 → x = y ∨ x = -y :=
 begin
-  sorry
+  intro hyp,
+  have H : (x+y)*(x-y) = 0,
+  { calc (x+y)*(x-y) = x^2 - y^2 : by ring
+                 ... = 0 : by linarith},
+  rw mul_eq_zero at H,
+  cases H with H1 H2, {
+    right,
+    linarith
+  }, {
+    left,
+    linarith
+  }
+
 end
 
 /-
@@ -243,7 +261,19 @@ In the next exercise, we can use:
 -- 0027
 example (f : ℝ → ℝ) : non_decreasing f ↔ ∀ x y, x < y → f x ≤ f y :=
 begin
-  sorry
+  split, {
+    intros hf x y hxy,
+    apply hf,
+    linarith,
+  }, {
+    intros h x y hxy,
+    cases eq_or_lt_of_le hxy with heq hlt, {
+      rw heq,
+    }, {
+      specialize h x y hlt,
+      exact h,
+    }
+  }
 end
 
 /-
@@ -254,6 +284,15 @@ In the next exercise, we can use:
 -- 0028
 example (f : ℝ → ℝ) (h : non_decreasing f) (h' : ∀ x, f (f x) = x) : ∀ x, f x = x :=
 begin
-  sorry
+  intro x,
+  cases le_total x (f x) with hxfx hfxx, {
+    specialize h x (f x) hxfx,
+    specialize h' x,
+    linarith,
+  }, {
+    specialize h (f x) x hfxx,
+    specialize h' x,
+    linarith,
+  }
 end
 
