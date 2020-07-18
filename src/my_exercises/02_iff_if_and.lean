@@ -42,7 +42,10 @@ Let's prove a variation (without invoking commutativity of addition since this w
 -- 0009
 example {a b : ℝ} (hab : a ≤ b) (c : ℝ) : a + c ≤ b + c :=
 begin
-  sorry
+  rw ← sub_nonneg,
+  ring,
+  rw sub_nonneg,
+  exact hab,
 end
 
 
@@ -84,7 +87,8 @@ end
 -- 0010
 example (a b : ℝ) (hb : 0 ≤ b) : a ≤ a + b :=
 begin
-  sorry
+  calc a = a + 0 : by ring
+     ... ≤ a + b : add_le_add_left hb a 
 end
 
 /-
@@ -108,7 +112,9 @@ Let's use those lemmas by hand for now.
 -- 0011
 example (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a + b :=
 begin
-  sorry
+  calc 0 = 0 + 0 : by ring
+     ... ≤ 0 + b : add_le_add_left hb 0
+     ... ≤ a + b : add_le_add_right ha b 
 end
 
 /- And let's combine with our earlier lemmas. -/
@@ -116,7 +122,8 @@ end
 -- 0012
 example (a b c d : ℝ) (hab : a ≤ b) (hcd : c ≤ d) : a + c ≤ b + d :=
 begin
- sorry
+ calc a + c ≤ a + d : add_le_add_left hcd a
+        ... ≤ b + d : add_le_add_right hab d
 end
 
 /-
@@ -217,21 +224,36 @@ Let's now practice all three styles using:
 -- 0013
 example (a b c : ℝ) (hc : c ≤ 0) (hab :  a ≤ b) : b*c ≤ a*c :=
 begin
-  sorry
+  rw ← sub_nonneg,
+  have key : a*c - b*c = (a-b)*c,
+    {ring},
+  rw key,
+  apply mul_nonneg_of_nonpos_of_nonpos,
+  { rwa sub_nonpos },
+  { exact hc },
 end
 
 /- Using forward reasonning -/
 -- 0014
 example (a b c : ℝ) (hc : c ≤ 0) (hab :  a ≤ b) : b*c ≤ a*c :=
 begin
-  sorry
+  have hab' : a - b ≤ 0,
+    {rwa sub_nonpos},
+  have h₁ : 0 ≤ (a-b)*c,
+    { exact mul_nonneg_of_nonpos_of_nonpos hab' hc },
+  have h₂ : (a-b)*c = a*c - b*c,
+    { ring },
+  rw h₂ at h₁,
+  rwa ←sub_nonneg,
 end
 
 /-- Using a combination of both, with a `calc` block -/
 -- 0015
 example (a b c : ℝ) (hc : c ≤ 0) (hab :  a ≤ b) : b*c ≤ a*c :=
 begin
-  sorry
+  rw ← sub_nonneg,
+  calc 0 ≤ (a-b)*c : mul_nonneg_of_nonpos_of_nonpos (by rwa sub_nonpos) hc
+     ... = a*c - b*c : by ring, 
 end
 
 /-
@@ -274,7 +296,8 @@ Let's practise using `intros`. -/
 -- 0016
 example (a b : ℝ): 0 ≤ b → a ≤ a + b :=
 begin
-  sorry
+  intros hb,
+  exact le_add_of_nonneg_right hb
 end
 
 
@@ -330,7 +353,11 @@ unspecified mathematical statements.
 -- 0017
 example (P Q R : Prop) : P ∧ Q → Q ∧ P :=
 begin
-  sorry
+  intro hpq,
+  cases hpq with hp hq,
+  split,
+  exact hq,
+  exact hp,
 end
 
 /-
@@ -363,7 +390,8 @@ Now redo the previous exercise using all those compressing techniques, in exactl
 -- 0018
 example (P Q R : Prop): P ∧ Q → Q ∧ P :=
 begin
-  sorry
+  rintros ⟨hp,hq⟩,
+  exact ⟨hq, hp⟩,
 end
 
 /-
@@ -375,7 +403,13 @@ an equivalence into two implications.
 -- 0019
 example (P Q R : Prop) : (P ∧ Q → R) ↔ (P → (Q → R)) :=
 begin
-  sorry
+  split, {
+    intros hpqr hp hq,
+    exact hpqr ⟨hp,hq⟩
+  }, {
+    rintros hpqr ⟨hp, hq⟩,
+    exact hpqr hp hq
+  }
 end
 
 /-
@@ -408,7 +442,7 @@ Now let's enjoy this for a while.
 -- 0020
 example (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a + b :=
 begin
-  sorry
+  linarith,
 end
 
 /- And let's combine with our earlier lemmas. -/
@@ -416,7 +450,7 @@ end
 -- 0021
 example (a b c d : ℝ) (hab : a ≤ b) (hcd : c ≤ d) : a + c ≤ b + d :=
 begin
-  sorry
+  linarith,
 end
 
 
@@ -441,8 +475,56 @@ only use the following three lemmas:
 open nat
 
 -- 0022
+/- Here are two solutions. The first is based on Massot's.#check
+The second is entirely mine, but less efficient!-/
+
 example (a b : ℕ) : a ∣ b ↔ gcd a b = a :=
 begin
-  sorry
+  -- sorry
+  have h : gcd a b ∣ a ∧ gcd a b ∣ b,
+    rw ←dvd_gcd_iff,
+  split, {
+    intro hab,
+    apply dvd_antisymm, {
+      exact h.1,
+    }, {
+      rw dvd_gcd_iff,
+      exact ⟨dvd_refl a, hab⟩ 
+    }
+  }, {
+    intro hab,
+    rw hab at h,
+    exact h.2,    
+  }
 end
+
+
+example (a b : ℕ) : a ∣ b ↔ gcd a b = a :=
+begin
+  have h : (gcd a b) ∣ a,
+    exact (dvd_gcd_iff.1 (dvd_refl (gcd a b))).1,
+  split, {
+    intro hab,
+    apply dvd_antisymm, {
+      exact h,
+    }, {
+      rw dvd_gcd_iff,
+      exact ⟨dvd_refl a, hab⟩,
+    }
+  }, {
+    intro hab,
+    suffices : a ∣ a ∧ a ∣ b, {
+      exact this.2,
+    }, {
+      apply dvd_gcd_iff.1,
+      rw hab,
+    }
+  }
+
+end
+
+
+
+
+
 
