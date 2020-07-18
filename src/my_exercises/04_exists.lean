@@ -44,9 +44,24 @@ By definition, a ∣ b ↔ ∃ k, b = a*k, so you can prove a ∣ b using the
 variables (a b c : ℤ)
 
 -- 0029
+/- I give two solutions. The second uses rcases.-/
 example (h₁ : a ∣ b) (h₂ : b ∣ c) : a ∣ c :=
 begin
-  sorry
+  cases h₁ with m hb,
+  cases h₂ with n hc,
+  rw hb at hc,
+  use (m*n),
+  rw hc,
+  ring,
+end
+
+
+example (h₁ : a ∣ b) (h₂ : b ∣ c) : a ∣ c :=
+begin
+  rcases h₂ with ⟨n, rfl⟩,
+  rcases h₁ with ⟨m, rfl⟩,
+  use (m*n),
+  ring,
 end
 
 /-
@@ -84,7 +99,13 @@ end
 -- 0030
 example : 0 ∣ a ↔ a = 0 :=
 begin
-  sorry
+  split, {
+    rintros ⟨_,rfl⟩,
+    ring,
+  }, {
+    rintros ⟨_⟩,
+    refl,
+  }
 end
 
 /-
@@ -101,9 +122,21 @@ variables (f g : ℝ → ℝ)
 
 
 -- 0031
+/- I give two solutions. The second is shorter.-/
 example (h : surjective (g ∘ f)) : surjective g :=
 begin
-  sorry
+  intro y,
+  specialize h y,
+  rcases h with ⟨b, hgf⟩, 
+  use (f b),
+  exact hgf,
+end
+
+example (h : surjective (g ∘ f)) : surjective g :=
+begin
+  intro y,
+  rcases (h y) with ⟨b, hgf, rfl⟩,
+  use (f b)
 end
 
 /- 
@@ -114,6 +147,9 @@ next exercise in four lines.
 -- 0032
 example (hf : surjective f) (hg : surjective g) : surjective (g ∘ f) :=
 begin
-  sorry
+  intro z,
+  rcases (hg z) with ⟨y, hg, rfl⟩,
+  rcases (hf y) with ⟨x, hf, rfl⟩,
+  use x,
 end
 
