@@ -307,6 +307,10 @@ def is_seq_sup (M : ℝ) (u : ℕ → ℝ) :=
 (∀ n, u n ≤ M) ∧ ∀ ε > 0, ∃ n₀, u n₀ ≥ M - ε
 
 -- 0038
+/-
+The first five lines of my proof are identical (up to variable names) to Massot's. He then finishes the proof in two lines whereas I take a further 9. His trick is to give 'arguments' to linarith
+-/
+
 example (M : ℝ) (h : is_seq_sup M u) (h' : non_decreasing u) :
 seq_limit u M :=
 begin
@@ -319,8 +323,6 @@ begin
     specialize hM n,
     linarith,
   specialize hM N,
-  have : u N ≤ M,
-    linarith,
   rw abs_le,
   have : u n ≥ u N,
     exact h' _ _ hn,
