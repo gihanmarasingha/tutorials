@@ -61,7 +61,12 @@ variables (u v w : ℕ → ℝ) (l l' : ℝ)
 -- 0033
 example : (∀ n, u n = l) → seq_limit u l :=
 begin
-  sorry
+  intros h ε εpos,
+  use 1,
+  intros n hn,
+  rw h,
+  norm_num,
+  linarith,
 end
 
 /- When dealing with absolute values, we'll use lemmas:
@@ -78,9 +83,32 @@ hand since they are used in many exercises.
 
 -- Assume l > 0. Then u tends to l implies u n ≥ l/2 for large enough n
 -- 0034
+/- Here are two proofs. The first my own cack-handed approach,
+the second taking a hint from Massot. -/
 example (hl : l > 0) : seq_limit u l → ∃ N, ∀ n ≥ N, u n ≥ l/2 :=
 begin
-  sorry
+  intro h,
+  specialize h (l/2) (by linarith),
+  cases h with N₀ hN₀,
+  existsi N₀,
+  intro n,
+  specialize hN₀ n,
+  intro hn,
+  have : |u n - l| ≤ l/2 := hN₀ hn,
+    rw abs_le at this,
+  have : u n - l ≥ -(l/2) := this.1,
+  linarith,
+end
+
+example (hl : l > 0) : seq_limit u l → ∃ N, ∀ n ≥ N, u n ≥ l/2 :=
+begin
+  intro h,
+  cases h (l/2) (by linarith) with N₀ hN₀,
+  use N₀,
+  intros n hn,
+  specialize hN₀ n hn,
+  rw abs_le at hN₀,
+  linarith
 end
 
 /- 
@@ -113,13 +141,14 @@ begin
                                -- This is an alias for `exact`, 
                                -- but reads nicer in this context 
   have fact₂ : |v n - l'| ≤ ε/2,
-    from hN₂ n (by linarith), 
+    from hN₂ n hn₂ , 
   calc
   |(u + v) n - (l + l')| = |u n + v n - (l + l')|   : rfl
                      ... = |(u n - l) + (v n - l')| : by congr' 1 ; ring
                      ... ≤ |u n - l| + |v n - l'|   : by apply abs_add
                      ... ≤  ε                       : by linarith,
 end
+
 
 /-
 In the above proof, we used `have` to prepare facts for `linarith` consumption in the last line.
@@ -147,20 +176,94 @@ end
 
 /- Let's do something similar: the squeezing theorem. -/
 -- 0035
+
+/- We give three solutions. The first is mine. The second uses
+rw abs_le at * (a la Massot) to reduce the number of lines.calc
+The last replaces the calc with linarith. -/
+
 example (hu : seq_limit u l) (hw : seq_limit w l)
 (h : ∀ n, u n ≤ v n)
 (h' : ∀ n, v n ≤ w n) : seq_limit v l :=
 begin
-  sorry
-
+  intros ε ε_pos,
+  cases hu ε (by linarith) with N₁ hN₁,
+  cases hw ε (by linarith) with N₂ hN₂,
+  use max N₁ N₂,
+  intros n hn,
+  rw ge_max_iff at hn,
+  rw abs_le,
+  specialize hN₁ n hn.1,
+  specialize hN₂ n hn.2,
+  specialize h n,
+  specialize h' n,
+  cases abs_le.mp hN₁ with hunl hunr,
+  cases abs_le.mp hN₂ with hwnl hwnr,
+  split,
+  calc
+  -ε  ≤ u n - l : hunl
+  ... ≤ v n - l : by linarith,
+  calc
+  v n - l ≤ w n - l : by linarith
+      ... ≤ ε : hwnr 
 end
+
+example (hu : seq_limit u l) (hw : seq_limit w l)
+(h : ∀ n, u n ≤ v n)
+(h' : ∀ n, v n ≤ w n) : seq_limit v l :=
+begin
+  intros ε ε_pos,
+  cases hu ε (by linarith) with N₁ hN₁,
+  cases hw ε (by linarith) with N₂ hN₂,
+  use max N₁ N₂,
+  intros n hn,
+  rw ge_max_iff at hn,
+  specialize hN₁ n hn.1,
+  specialize hN₂ n hn.2,
+  specialize h n,
+  specialize h' n,
+  rw abs_le at *,
+  split,
+  calc
+  -ε  ≤ u n - l : hN₁.1 
+  ... ≤ v n - l : by linarith,
+  calc
+  v n - l ≤ w n - l : by linarith
+      ... ≤ ε : hN₂.2
+end
+
+example (hu : seq_limit u l) (hw : seq_limit w l)
+(h : ∀ n, u n ≤ v n)
+(h' : ∀ n, v n ≤ w n) : seq_limit v l :=
+begin
+  intros ε ε_pos,
+  cases hu ε (by linarith) with N₁ hN₁,
+  cases hw ε (by linarith) with N₂ hN₂,
+  use max N₁ N₂,
+  intros n hn,
+  rw ge_max_iff at hn,
+  specialize hN₁ n hn.1,
+  specialize hN₂ n hn.2,
+  specialize h n,
+  specialize h' n,
+  rw abs_le at *,
+  split;
+    linarith
+end
+
 
 /- What about < ε? -/
 -- 0036
 example (u l) : seq_limit u l ↔
  ∀ ε > 0, ∃ N, ∀ n ≥ N, |u n - l| < ε :=
 begin
-  sorry
+  split; {
+    intros hseq ε ε_pos,
+    cases hseq (ε/2) (by linarith) with N hN,
+    use N,
+    intros n hn,
+    specialize hN n hn,
+    linarith,
+  }
 end
 
 /- In the next exercise, we'll use
@@ -170,9 +273,28 @@ eq_of_abs_sub_le_all (x y : ℝ) : (∀ ε > 0, |x - y| ≤ ε) → x = y
 
 -- A sequence admits at most one limit
 -- 0037
+
+/-
+Note: we have to use eq_of_abs_sub_le_all to get a universally quantified stament from which we extract ε.
+
+-/
 example : seq_limit u l → seq_limit u l' → l = l' :=
 begin
-  sorry
+  intros hul hul',
+  apply eq_of_abs_sub_le_all,
+  intros ε ε_pos,
+  cases hul (ε/2) (by linarith) with N₁ hN₁,
+  cases hul' (ε/2) (by linarith) with N₂ hN₂,
+  specialize hN₁ (max N₁ N₂),
+  specialize hN₂ (max N₁ N₂),
+  have h₁ : |u (max N₁ N₂) - l | ≤ ε/2 :=
+    hN₁ (le_max_left N₁ N₂),
+  have h₂ : |u (max _ _) - l'| ≤ ε/2 :=
+    hN₂ (le_max_right _ _),
+  calc |l -l'| = |(l - u (max N₁ N₂)) + (u (max N₁ N₂) - l')| : by ring
+           ... ≤ |l - u (max N₁ N₂)| +|u (max N₁ N₂) - l'| : abs_add _ _
+           ... = |u (max N₁ N₂) - l| + |u (max N₁ N₂) - l'| : by rw abs_sub
+           ... ≤ ε : by linarith
 end
 
 /-
@@ -188,6 +310,21 @@ def is_seq_sup (M : ℝ) (u : ℕ → ℝ) :=
 example (M : ℝ) (h : is_seq_sup M u) (h' : non_decreasing u) :
 seq_limit u M :=
 begin
-  sorry
+  intros ε ε_pos,
+  cases h with hM h₂,
+  cases h₂ ε ε_pos with N hNM,
+  use N,
+  intros n hn,
+  have : u n ≤ M,
+    specialize hM n,
+    linarith,
+  specialize hM N,
+  have : u N ≤ M,
+    linarith,
+  rw abs_le,
+  have : u n ≥ u N,
+    exact h' _ _ hn,
+  split;
+    linarith,  
 end
 
