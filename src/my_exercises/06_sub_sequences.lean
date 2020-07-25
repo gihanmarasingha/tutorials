@@ -33,18 +33,29 @@ def extraction (φ : ℕ → ℕ) := ∀ n m, n < m → φ n < φ m
 
 variable { φ : ℕ → ℕ}
 
+example (a b : ℕ) : a < b → a.succ ≤ b :=
+begin
+  exact nat.succ_le_iff.mpr
+end
+
+
 /-
 The next lemma is proved by an easy induction, but we haven't seen induction
 in this tutorial. If you did the natural number game then you can delete 
 the proof below and try to reconstruct it.
 -/
 /-- An extraction is greater than id -/
+-- I've written my own solution below. Massot's is simpler.
 lemma id_le_extraction' : extraction φ → ∀ n, n ≤ φ n :=
 begin
-  intros hyp n,
-  induction n with n hn,
-  { exact nat.zero_le _ },
-  { exact nat.succ_le_of_lt (by linarith [hyp n (n+1) (by linarith)]) },
+  intros he n,
+  induction n with k hk,
+    linarith, -- base case
+    have : φ k < φ (k.succ) :=
+      he k k.succ _,
+    have : k < φ (k.succ) := by linarith,
+    exact nat.succ_le_of_lt this,
+    exact lt_add_one k,    
 end
 
 /-- Extractions take arbitrarily large values for arbitrarily large 
@@ -52,7 +63,17 @@ inputs. -/
 -- 0039
 lemma extraction_ge : extraction φ → ∀ N N', ∃ n ≥ N', φ n ≥ N :=
 begin
-  sorry
+  intros he N N',
+  use (max N N'),
+  split, {
+    exact le_max_right _ _,
+  }, {
+    have : φ (max N N') ≥ max N N' :=
+      id_le_extraction' he (max N N'),
+    have : max N N' ≥ N := le_max_left _ _,
+    linarith,
+  }
+
 end
 
 /-- A real number `a` is a cluster point of a sequence `u` 
@@ -79,7 +100,17 @@ One gets used to it. Alternatively, one can get rid of it using the lemma
 lemma near_cluster :
   cluster_point u a → ∀ ε > 0, ∀ N, ∃ n ≥ N, |u n - a| ≤ ε :=
 begin
-  sorry
+  intros hcp ε ε_pos N,
+  rcases hcp with ⟨φ, ⟨hexf,hseq⟩⟩,
+  rcases (hseq ε ε_pos) with ⟨N₀, hn⟩,
+  rcases (extraction_ge hexf N N₀) with ⟨m,⟨H,hphi⟩⟩,
+  use (φ m),
+  split, {
+    exact hphi,
+  }, {
+    specialize hn m,
+    exact hn H,
+  }
 end
 
 /-
