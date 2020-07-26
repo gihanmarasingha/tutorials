@@ -124,15 +124,47 @@ existential statements.
 lemma subseq_tendsto_of_tendsto' (h : seq_limit u l) (hφ : extraction φ) :
 seq_limit (u ∘ φ) l :=
 begin
-  sorry
+  intros ε ε_pos,
+  cases (h ε ε_pos) with N h2,
+  use N,
+  intros n hn,
+  apply h2,
+  linarith [id_le_extraction' hφ n],
 end
 
 /-- If `u` tends to `l` all its cluster points are equal to `l`. -/
 -- 0042
+/- I give two proofs. The first proof is quick and uses the results we've already proved. The second is longer! -/
+
 lemma cluster_limit (hl : seq_limit u l) (ha : cluster_point u a) : a = l :=
 begin
-  sorry
+  rcases ha with ⟨φ,⟨hφ, hφa⟩⟩,
+  have hφl : seq_limit (u ∘ φ) l :=
+    subseq_tendsto_of_tendsto' hl  hφ,
+  exact unique_limit hφa hφl,
 end
+
+example (hl : seq_limit u l) (ha : cluster_point u a) : a = l :=
+begin
+  apply eq_of_abs_sub_le_all,
+  intros ε ε_pos,
+  cases (hl (ε/2) (by linarith)) with N₁ hN₁,
+  rcases ha with ⟨φ,⟨hφ,hseqφ⟩⟩,
+  cases (hseqφ (ε/2) (by linarith)) with N₂ hN₂,
+  specialize hN₂ (max N₁ N₂),
+  specialize hN₁ (φ (max N₁ N₂)),
+  have hf :  N₁ ≤ φ (max N₁ N₂) :=
+    calc N₁ ≤ max N₁ N₂ : le_max_left _ _
+        ... ≤ φ (max N₁ N₂) : id_le_extraction' hφ _,
+  calc
+    |a - l| = |(a - u (φ (max N₁ N₂))) + (u (φ (max N₁ N₂)) -l )| : by ring
+        ... ≤ |(a - u (φ (max N₁ N₂)))| + |(u (φ (max N₁ N₂)) -l )| : by simp [abs_add]
+        ... = |u (φ (max N₁ N₂))- a| + |u (φ (max N₁ N₂)) -l| : by simp [abs_sub]
+        ... ≤ ε/2 + |u (φ (max N₁ N₂)) -l| : by simp [hN₂ (le_max_right _ _)]
+        ... ≤ ε/2 + ε/2 : by linarith [hN₁ hf]
+        ... ≤ ε : by linarith,
+end
+
 
 /-- Cauchy_sequence sequence -/
 def cauchy_sequence (u : ℕ → ℝ) := ∀ ε > 0, ∃ N, ∀ p q, p ≥ N → q ≥ N → |u p - u q| ≤ ε
@@ -140,7 +172,17 @@ def cauchy_sequence (u : ℕ → ℝ) := ∀ ε > 0, ∃ N, ∀ p q, p ≥ N →
 -- 0043
 example : (∃ l, seq_limit u l) → cauchy_sequence u :=
 begin
-  sorry
+  rintro ⟨l, hseql⟩,
+  intros ε ε_pos,
+  cases (hseql (ε/2) (by linarith)) with N hN,
+  use N,
+  intros p q hp hq,
+  calc |u p - u q| = |(u p - l) + (l - u q)| : by ring
+               ... ≤ |u p - l| + |l - u q| : by apply abs_add
+               ... = |u p - l| + |u q - l| : by simp [abs_sub]
+               ... ≤ ε/2 + |u q - l| : by simp [hN p hp]
+               ... ≤ ε/2 + ε/2 : by linarith [hN q hq]
+               ... ≤ ε : by linarith,
 end
 
 
@@ -151,6 +193,24 @@ In the next exercise, you can reuse
 -- 0044
 example (hu : cauchy_sequence u) (hl : cluster_point u l) : seq_limit u l :=
 begin
-  sorry
+  intros ε ε_pos,
+ -- unfold cauchy_sequence at hu,
+ -- unfold cluster_point at hl,
+  cases hu (ε/3) (by linarith) with N₁ hN₁,
+  rcases near_cluster hl (ε/3) (by linarith) N₁ with ⟨p,hpN₁,hp⟩,
+  rcases hl with ⟨φ,⟨hφ,hseqφ⟩⟩,
+  cases hseqφ (ε/3) (by linarith) with N₂ hN₂,
+  use (max N₁ N₂),
+  intros n hn,
+  have : n ≥ N₁, linarith [le_max_left N₁ N₂],
+  have : φ (max N₁ N₂) ≥ N₁,
+    linarith [id_le_extraction' hφ (max N₁ N₂), le_max_left N₁ N₂],
+  calc |u n - l| = |(u n - u p) + ( (u p - u (φ (max N₁ N₂))) + (u (φ (max N₁ N₂)) - l) )| : by ring
+             ... ≤ |u n - u p| + |(u p - u (φ (max N₁ N₂))) + (u (φ (max N₁ N₂)) - l)| : by simp [abs_add]
+             ... ≤ ε/3 + |(u p - u (φ (max N₁ N₂))) + (u (φ (max N₁ N₂)) - l)| : by simp [hN₁ n p (by linarith) hpN₁]
+             ... ≤ ε/3 + (|u p - u (φ (max N₁ N₂))| + |u (φ (max N₁ N₂)) - l| ) : by simp [abs_add]
+             ... ≤ ε/3 + (ε/3 + |u (φ (max N₁ N₂)) - l|) : by simp [hN₁ p (φ (max N₁ N₂)) hpN₁ (by linarith)]
+             ... ≤ ε/3 + (ε/3 + ε/3) : by simp [hN₂ (max N₁ N₂) (le_max_right N₁ N₂)]
+             ... ≤ ε : by ring,
 end
 
