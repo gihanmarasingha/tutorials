@@ -194,23 +194,14 @@ In the next exercise, you can reuse
 example (hu : cauchy_sequence u) (hl : cluster_point u l) : seq_limit u l :=
 begin
   intros ε ε_pos,
- -- unfold cauchy_sequence at hu,
- -- unfold cluster_point at hl,
-  cases hu (ε/3) (by linarith) with N₁ hN₁,
-  rcases near_cluster hl (ε/3) (by linarith) N₁ with ⟨p,hpN₁,hp⟩,
-  rcases hl with ⟨φ,⟨hφ,hseqφ⟩⟩,
-  cases hseqφ (ε/3) (by linarith) with N₂ hN₂,
-  use (max N₁ N₂),
+  cases hu (ε/2) (by linarith) with N₁ hN₁,
+  rcases near_cluster hl (ε/2) (by linarith) N₁ with ⟨p,hpN₁,hp⟩,
+  use N₁,
   intros n hn,
-  have : n ≥ N₁, linarith [le_max_left N₁ N₂],
-  have : φ (max N₁ N₂) ≥ N₁,
-    linarith [id_le_extraction' hφ (max N₁ N₂), le_max_left N₁ N₂],
-  calc |u n - l| = |(u n - u p) + ( (u p - u (φ (max N₁ N₂))) + (u (φ (max N₁ N₂)) - l) )| : by ring
-             ... ≤ |u n - u p| + |(u p - u (φ (max N₁ N₂))) + (u (φ (max N₁ N₂)) - l)| : by simp [abs_add]
-             ... ≤ ε/3 + |(u p - u (φ (max N₁ N₂))) + (u (φ (max N₁ N₂)) - l)| : by simp [hN₁ n p (by linarith) hpN₁]
-             ... ≤ ε/3 + (|u p - u (φ (max N₁ N₂))| + |u (φ (max N₁ N₂)) - l| ) : by simp [abs_add]
-             ... ≤ ε/3 + (ε/3 + |u (φ (max N₁ N₂)) - l|) : by simp [hN₁ p (φ (max N₁ N₂)) hpN₁ (by linarith)]
-             ... ≤ ε/3 + (ε/3 + ε/3) : by simp [hN₂ (max N₁ N₂) (le_max_right N₁ N₂)]
+  have : n ≥ N₁, linarith,
+  calc |u n - l| = |(u n - u p) +  (u p - l)| : by ring
+             ... ≤ |u n - u p| + |u p - l| : by simp [abs_add]
+             ... ≤ ε/2 + |u p - l| : by simp [hN₁ n p (by linarith) hpN₁]
+             ... ≤ ε/2 + ε/2: by linarith [hp]
              ... ≤ ε : by ring,
 end
-
