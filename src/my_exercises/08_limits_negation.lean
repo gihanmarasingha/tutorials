@@ -22,19 +22,19 @@ variables (u : ℕ → ℝ) (f : ℝ → ℝ) (x₀ l : ℝ)
 /- Negation of "u tends to l" -/
 -- 0062
 example : ¬ (∀ ε > 0, ∃ N, ∀ n ≥ N, |u n - l| ≤ ε) ↔
-sorry
+∃ ε > 0, ∀ N, ∃ n ≥ N, |u n - l| > ε
 :=
 begin
-  sorry
+  check_me,
 end
 
 /- Negation of "f is continuous at x₀" -/
 -- 0063
 example : ¬ (∀ ε > 0, ∃ δ > 0, ∀ x, |x - x₀| ≤ δ →  |f x - f x₀| ≤ ε) ↔
-sorry
+∃ ε > 0, ∀ δ > 0, ∃ x, |x - x₀| ≤ δ ∧ |f x - f x₀| > ε
 :=
 begin
-  sorry
+  check_me,
 end
 
 /-
@@ -48,21 +48,22 @@ Also, `∃ x x', ...` is the abbreviation of `∃ x, ∃ x', ...`.
 /- Negation of "f is uniformly continuous on ℝ" -/
 -- 0064
 example : ¬ (∀ ε > 0, ∃ δ > 0, ∀ x x', |x' - x| ≤ δ →  |f x' - f x| ≤ ε) ↔
-sorry
+∃ ε > 0, ∀ δ > 0, ∃ x x', |x' - x| ≤ δ ∧ |f x' - f x| > ε
 :=
 begin
-  sorry
+  check_me,
 end
 
 /- Negation of "f is sequentially continuous at x₀" -/
 -- 0065
 example : ¬ (∀ u : ℕ → ℝ, (∀ ε > 0, ∃ N, ∀ n ≥ N, |u n - x₀| ≤ ε) → (∀ ε > 0, ∃ N, ∀ n ≥ N, |(f ∘ u) n - f x₀| ≤ ε))  ↔
-sorry
+  ∃ u : ℕ → ℝ, (∀ ε > 0, ∃ N, ∀ n ≥ N, |u n - x₀| ≤ ε) ∧
+  (∃ ε > 0, ∀ N, ∃ n ≥ N, |(f ∘ u) n - f x₀| > ε)
 :=
 begin
-  sorry
+  check_me,
 end
-end
+end -- end of section
 
 /-
 We now turn to elementary applications of negations to limits of sequences.
@@ -85,7 +86,26 @@ def tendsto_infinity (u : ℕ → ℝ) := ∀ A, ∃ N, ∀ n ≥ N, u n ≥ A
 -- 0066
 example {u : ℕ → ℝ} : tendsto_infinity u → ∀ l, ¬ seq_limit u l :=
 begin
-  sorry
+  intros htinf l,
+  unfold seq_limit,
+  push_neg,
+  cases htinf (2+l) with M hn,
+  use [1, (by linarith)],
+  intro N,
+  use (max N M),
+  split, {
+    exact le_max_left N M,
+  }, {
+    by_contradiction H,
+    simp [abs_le] at H,
+    cases H,
+    have : 2 +l < 2 + l,
+    calc 2 + l ≤ u (max N M) : hn (max N M) (le_max_right N M)
+           ... < 2 + l : by linarith,
+    linarith,
+  }
+
+
 end
 
 def nondecreasing_seq (u : ℕ → ℝ) := ∀ n m, n ≤ m → u n ≤ u m
