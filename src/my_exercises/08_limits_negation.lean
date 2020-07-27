@@ -84,6 +84,7 @@ def tendsto_infinity (u : ℕ → ℝ) := ∀ A, ∃ N, ∀ n ≥ N, u n ≥ A
 -/
 
 -- 0066
+/- My comment: the model solutions do not use push_neg or proof by contradiction-/
 example {u : ℕ → ℝ} : tendsto_infinity u → ∀ l, ¬ seq_limit u l :=
 begin
   intros htinf l,
@@ -114,7 +115,14 @@ def nondecreasing_seq (u : ℕ → ℝ) := ∀ n m, n ≤ m → u n ≤ u m
 example (u : ℕ → ℝ) (l : ℝ) (h : seq_limit u l) (h' : nondecreasing_seq u) :
   ∀ n, u n ≤ l :=
 begin
-  sorry
+  intro k,
+  by_contradiction H,
+  cases h ((u k -l)/2) (by linarith) with N hN,
+  let p := max k N,
+  specialize hN p (le_max_right k N),
+  specialize h' k p (le_max_left k N),
+  rw abs_le at hN,
+  linarith,
 end
 
 /-
@@ -144,10 +152,16 @@ but we won't need this.
 -/
 
 -- 0068
+/- My comment: the model solution is much shorter and uses contrapose! -/
 example {A : set ℝ} {x : ℝ} (hx : is_sup A x) :
 ∀ y, y < x → ∃ a ∈ A, y < a :=
 begin
-  sorry
+  intros y hy,
+  by_contradiction H,
+  push_neg at H,
+  cases hx with _ hsup,
+  specialize hsup y H,
+  linarith,
 end
 
 /-
@@ -159,13 +173,24 @@ exercise below.
 lemma le_of_le_add_all' {x y : ℝ} :
   (∀ ε > 0, y ≤ x + ε) →  y ≤ x :=
 begin
-  sorry
+  contrapose!,
+  intro hxy,
+  use ((y-x)/2),
+  split;
+    linarith,
 end
 
 -- 0070
 example {x y : ℝ} {u : ℕ → ℝ} (hu : seq_limit u x)
   (ineg : ∀ n, u n ≤ y) : x ≤ y :=
 begin
-  sorry
+  apply le_of_le_add_all',
+  intros ε ε_pos,
+  cases hu ε ε_pos with N hN,
+  specialize hN N (by linarith),
+  specialize ineg N,
+  rw abs_le at hN,
+  cases hN with h _,
+  linarith,
 end
 
