@@ -22,13 +22,37 @@ variables P Q : Prop
 -- 0055
 example : (P → Q) ↔ (¬ Q → ¬ P) :=
 begin
-  sorry
+  split, {
+    intros hpq hnq hp,
+    exact hnq (hpq hp),
+  }, {
+    intros hnqnp hp,
+    by_contradiction hnq,
+    exact (hnqnp hnq) hp,
+  }
 end
 
 -- 0056
+/- The model solutions handle the first case more efficiently bu using a double contradiction. -/
 lemma non_imp (P Q : Prop) : ¬ (P → Q) ↔ P ∧ ¬ Q :=
 begin
-  sorry
+  split, {
+    intro hnpq,
+    by_cases hp : P, {
+      by_cases hq : Q,
+        exact ⟨hp, λ q, hnpq (λ p, q) ⟩,
+        exact ⟨hp, hq⟩,
+    }, {
+      exfalso,
+      have hpq : P → Q,
+        intro p,
+        exfalso, exact hp p,
+      exact hnpq hpq,
+    }
+  }, {
+    rintros ⟨hp,hnq⟩ hnpq,
+    exact hnq (hnpq hp),
+  }
 end
 
 -- In the next one, let's use the axiom
