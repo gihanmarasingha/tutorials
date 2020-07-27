@@ -58,10 +58,28 @@ end
 -- In the next one, let's use the axiom
 -- propext {P Q : Prop} : (P ↔ Q) → P = Q
 
+
+/- My comments: 
+  What wasn't obvious to me before starting this question is that = has higher order of precedence that → or ↔.
+
+  So,
+    propext : (A ↔ B) → (A = B)
+  and the question asks us to prove ¬P ↔ (P = false).
+-/
+
+
 -- 0057
 example (P : Prop) : ¬ P ↔ P = false :=
 begin
-  sorry
+  split, {
+    intro hnp,
+    suffices h : P ↔ false,
+      exact propext h,
+    split; contradiction,
+  }, {
+    rintro ⟨h,rfl⟩,
+    contradiction,
+  }
 end
 
 end negation_prop
@@ -72,25 +90,64 @@ variables (X : Type) (P : X → Prop)
 -- 0058
 example : ¬ (∀ x, P x) ↔ ∃ x, ¬ P x :=
 begin
-  sorry
+  split, {
+    intro hna,
+    by_contradiction hnex,
+    apply hna,
+    intro x,
+    by_contradiction h,
+    apply hnex,
+    use x,
+  }, {
+    rintros ⟨x,hn⟩ hax,
+    exact hn (hax x),
+  }
 end
 
 -- 0059
 example : ¬ (∃ x, P x) ↔ ∀ x, ¬ P x :=
 begin
-  sorry
+  split, {
+    intros hnex x hnp,
+    apply hnex,
+    use x,
+    exact hnp,
+  }, {
+    rintros hax ⟨x,hx⟩,
+    exact (hax x) hx,
+  }
 end
 
 -- 0060
 example (P : ℝ → Prop) : ¬ (∃ ε > 0, P ε) ↔ ∀ ε > 0, ¬ P ε :=
 begin
-  sorry
+  split, {
+    intros hnex ε ε_pos hnp,
+    apply hnex,
+    use ε,
+    exact ⟨ε_pos, hnp⟩,
+  }, {
+    rintros ha ⟨ε,⟨ε_pos,hp⟩⟩,
+    exact (ha ε ε_pos) hp,
+  }
 end
 
 -- 0061
 example (P : ℝ → Prop) : ¬ (∀ x > 0, P x) ↔ ∃ x > 0, ¬ P x :=
 begin
-  sorry
+  split, {
+    intro hna,
+    by_contradiction hex,
+    apply hna,
+    intros x x_pos,
+    by_contradiction hp,
+    apply hex,
+    use x,
+    exact ⟨x_pos, hp⟩,
+  }, {
+    rintros ⟨x,x_pos,hnp⟩ hax,
+    exact hnp (hax x x_pos),
+  }
 end
 
 end negation_quantifiers
