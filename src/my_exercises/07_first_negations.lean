@@ -54,7 +54,21 @@ begin
 end
 
 -- 0046
-/- Note the second case below can be simplified. See the model solutions.-/
+/- I give two solutions. The second is longer and misses the obvious idea of trying proof by negation to derive ¬P . -/
+example (P Q : Prop) (h₁ : P ∨ Q) (h₂ : ¬ (P ∧ Q)) : ¬ P ↔ Q :=
+begin
+  split, {
+    intro hnp,
+    cases h₁ with hp hq,
+      exfalso, exact hnp hp,
+      exact hq,
+  }, {
+    intros hq hp,
+    exact h₂ ⟨hp,hq⟩,
+  }
+end
+
+
 example (P Q : Prop) (h₁ : P ∨ Q) (h₂ : ¬ (P ∧ Q)) : ¬ P ↔ Q :=
 begin
   split, {
@@ -155,7 +169,7 @@ In the next exercise, we'll use
  not_even_iff_odd : ¬ even n ↔ odd n,
 -/
 -- 0048
-/- The solution below can be simplified using rintro. -/
+/- Again two solutions. The second improves on the first by using rcases with rfl. -/
 example (n : ℤ) : even (n^2) ↔ even n :=
 begin
   split, {
@@ -174,6 +188,25 @@ begin
     ring,
   }
 end
+
+example (n : ℤ) : even (n^2) ↔ even n :=
+begin
+  split, {
+    contrapose,
+    simp [not_even_iff_odd],
+    rintro ⟨k, rfl⟩,
+    use (2*k^2 + 2*k),
+    ring,
+  }, {
+    rintro ⟨k, rfl⟩,
+    use (2*k^2),
+    ring,
+  }
+end
+
+
+
+
 /-
 As a last step on our law of the excluded middle tour, let's notice that, especially
 in pure logic exercises, it can sometimes be useful to use the
@@ -240,6 +273,7 @@ In the first exercise, only the definition of negation is needed.
 -/
 
 -- 0050
+/- Two proofs. The second is simpler: it uses rintros, an anoymous constructor for the existential quantifier, and uses 'application' rather than specialize. -/
 example (n : ℤ) : ¬ (∃ k, n = 2*k) ↔ ∀ k, n ≠ 2*k :=
 begin
   split, {
@@ -255,6 +289,19 @@ begin
   }
 end
 
+example (n : ℤ) : ¬ (∃ k, n = 2*k) ↔ ∀ k, n ≠ 2*k :=
+begin
+  split, {
+    intros hnex k hnk,
+   -- apply hnex,
+    --exact ⟨k, hnk⟩,
+    exact hnex ⟨k, hnk⟩,
+  }, {
+    rintros hallk ⟨k,hnk⟩,
+    exact hallk k hnk,
+  }
+end
+
 /-
 Contrary to negation of the existential quantifier, negation of the
 universal quantifier requires excluded middle for the first implication.
@@ -266,6 +313,7 @@ In order to prove this, we can use either
 def even_fun (f : ℝ → ℝ) := ∀ x, f (-x) = f x
 
 -- 0051
+/- Two solutions. The second is shorter. -/
 example (f : ℝ → ℝ) : ¬ even_fun f ↔ ∃ x, f (-x) ≠ f x :=
 begin
   split, {
@@ -284,6 +332,23 @@ begin
     exact hnef x,
   }
 end
+
+example (f : ℝ → ℝ) : ¬ even_fun f ↔ ∃ x, f (-x) ≠ f x :=
+begin
+  split, {
+    intro hnef,
+    by_contradiction H,
+    apply hnef,
+    intro x,
+    by_contradiction K,
+    apply H,
+    use x,
+  }, {
+    rintros ⟨x,hnef⟩ hef,
+    exact hnef (hef x),
+  }
+end
+
 
 /-
 Of course we can't keep repeating the above proofs, especially the second one.
@@ -318,6 +383,7 @@ end
 
 -- Let's contrapose
 -- 0053
+/- The following is shorter than that in the model solution. -/
 example (x : ℝ) : (∀ ε > 0, x ≤ ε) → x ≤ 0 :=
 begin
   contrapose,
