@@ -30,7 +30,30 @@ Let's start with a variation on a known exercise.
 lemma le_lim {x y : ℝ} {u : ℕ → ℝ} (hu : seq_limit u x)
   (ineg : ∃ N, ∀ n ≥ N, y ≤ u n) : y ≤ x :=
 begin
-  sorry
+  apply le_of_le_add_all,
+  intros ε ε_pos,
+  cases ineg with N₁,
+  cases hu ε ε_pos with N₂ hN₂,
+  let N := max N₁ N₂,
+  have h₁ : y ≤ u N := ineg_h N (le_max_left _ _),
+  have h₂ : |u N - x| ≤ ε := hN₂ N (le_max_right _ _),
+  have h₃ : u N - x ≤ ε := (abs_le.mp h₂).right,
+  linarith,
+end
+
+example {x y : ℝ} {u : ℕ → ℝ} (hu : seq_limit u x)
+  (ineg : ∃ N, ∀ n ≥ N, y ≤ u n) : y ≤ x :=
+begin
+  apply le_of_le_add_all,
+  intros ε ε_pos,
+  cases ineg with N₁,
+  cases hu ε ε_pos with N₂ hN₂,
+  let N := max N₁ N₂,
+  have h₁ : y ≤ u N := ineg_h N (le_max_left _ _),
+  have h₂ : u N - x ≤ ε,
+  { refine (abs_le.mp _).right,
+    exact hN₂ N (le_max_right _ _), },
+  linarith,
 end
 
 /-
@@ -84,16 +107,20 @@ begin
   { intro h,
     split,
     {
-      sorry
+      exact h.left,
     },
     { have : ∀ n : ℕ, ∃ a ∈ A, x - 1/(n+1) < a,
       { intros n,
         have : 1/(n+1 : ℝ) > 0,
           exact nat.one_div_pos_of_nat,
-        sorry
+          apply lt_sup h,
+          linarith,
       },
       choose u hu using this,
-      sorry
+      use u,
+      split,
+      { sorry, },
+      { sorry, },
   } },
   { rintro ⟨maj, u, limu, u_in⟩, 
     sorry
