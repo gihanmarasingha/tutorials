@@ -173,7 +173,30 @@ example :
   (∀ u : ℕ → ℝ, seq_limit u x₀ → seq_limit (f ∘ u) (f x₀)) →
   continuous_at_pt f x₀ :=
 begin
-  sorry
+  contrapose!,
+  intro h,
+  unfold continuous_at_pt at h,
+  push_neg at h,
+  rcases h with ⟨α, α_pos, hδ⟩,
+  have : ∀ n : ℕ, ∃ a, |a - x₀| ≤ 1/(n+1 : ℝ) ∧ |f a - f x₀| > α,
+  { intro n,
+    apply hδ (1/(n+1)) (nat.one_div_pos_of_nat), },
+  choose u hu using this,
+  use u,
+  split,
+  { intros ε ε_pos,
+    cases inv_succ_le_all ε ε_pos with N hN,
+    use N,
+    intros m hm,
+    linarith [hN m hm, (hu m).left], },
+  { unfold seq_limit,
+    push_neg,
+    use α,
+    apply and.intro α_pos,
+    intro N,
+    use N,
+    apply and.intro (le_refl N),
+    apply (hu N).right, },
 end
 
 /-
