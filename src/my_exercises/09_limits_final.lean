@@ -99,6 +99,12 @@ The structure of the proof is offered. It features a new tactic:
 after using it should be enough to understand everything). 
 -/
 
+
+/-
+
+I NEED TO READ MASSOT'S SOLUTIONS AGAIN FOR THE FOLLOWING!!
+
+-/
 -- 0072
 lemma is_sup_iff (A : set ℝ) (x : ℝ) :
 (is_sup A x) ↔ (upper_bound A x ∧ ∃ u : ℕ → ℝ, seq_limit u x ∧ ∀ n, u n ∈ A ) :=
@@ -154,7 +160,12 @@ variables {f : ℝ → ℝ} {x₀ : ℝ} {u : ℕ → ℝ}
 lemma seq_continuous_of_continuous (hf : continuous_at_pt f x₀)
   (hu : seq_limit u x₀) : seq_limit (f ∘ u) (f x₀) :=
 begin
-  sorry
+  intros ε ε_pos,
+  rcases hf ε ε_pos with ⟨δ, δ_pos, hδ⟩,
+  cases hu δ δ_pos with N,
+  use N,
+  intros n hn,
+  apply hδ (u n) (h n hn),
 end
 
 -- 0074
